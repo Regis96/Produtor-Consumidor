@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #define TAM 4
 //vou usar letra A
@@ -16,24 +17,35 @@ int vetorCheio(char  string[TAM]);
 
 
 
-char buffer[TAM];
+char buffer[TAM]={'b','b','b','b'};
 int consumidorDormindo=0,produtorDormindo=0;
 int contador=0;
+pthread_t thread1,thread2;
 
 void *produtor(void *args){
 	while(1){
 		if(vetorCheio(buffer) == -1){
 			produtorDormindo=1;
 			while(produtorDormindo){
-				sleep(3);
 				printf("\nProdutor dormindo por 3 segundos\n");
+				sleep(100);
+				
 			}
 			
 		}
 		
-		buffer[contador] == 'A';
+		if(vetorVazio(buffer) == 1 ){
+			buffer[contador] = 'A';
+			signal(SIGCONT);//acorda o consumidor se o buffer estiver vazio
+			printf("\nProdutor acordou o consumidor\n");
+		}else{
+			buffer[contador] = 'A';
+			
+		}
 		
 		printf("\nProdutor escreveu A no buffer na posicao %d\n",contador);
+		printf("%c|%c|%c|%c",buffer[0],buffer[1],buffer[2],buffer[3]);
+		
 		if(contador == 3){
 			contador = 0;
 		}
@@ -43,10 +55,7 @@ void *produtor(void *args){
 
 		
 
-		if(vetorVazio(buffer) == 1 ){
-			consumidorDormindo = 0;//acorda o consumidor se o buffer estiver vazio
-			printf("\nProdutor acordou o consumidor\n");
-		}
+		
 	}
 
 }
@@ -56,14 +65,23 @@ void *consumidor(void *args){
 		if(vetorVazio(buffer) == 1){
 			consumidorDormindo=1;
 			while(consumidorDormindo){
-				sleep(3);
 				printf("\nConsumidor dormindo por 3 segundos\n");
+				sleep(100);
+				
 			}
 
 		}
+		if(vetorCheio(buffer) == -1){
+			buffer[contador]='B';
+			signal(SIGCONT);//acorda o produtor se o buffer ja estiver cheio
+			printf("\nConsumidor acordou o produtor\n");
+		}else{
+			buffer[contador]='B';
+			
+		}
 		
-		buffer[contador]=='B';
-		printf("Consumidor apagou o A do buffer na posicao %d\n",contador);
+		printf("\nConsumidor apagou o A do buffer na posicao %d\n",contador);
+		printf("%c|%c|%c|%c",buffer[0],buffer[1],buffer[2],buffer[3]);
 		if(contador == 0){
 			contador = 3;
 		}
@@ -72,10 +90,6 @@ void *consumidor(void *args){
 		}
 		
 
-		if(vetorCheio(buffer) == -1){
-			produtorDormindo=0;//acorda o produtor se o buffer ja estiver cheio
-			printf("\nConsumidor acordou o produtor\n");
-		}
 	}
 	
 }
@@ -102,12 +116,13 @@ int vetorCheio(char  string[TAM]){
 
 
 int  main(){
-	pthread_t thread1,thread2;
+	
 	pthread_create(&thread1,NULL,produtor,NULL);
 	pthread_create(&thread2,NULL,consumidor,NULL);
 	while(1){
 
 	}
+
 
 }
 
